@@ -1,0 +1,32 @@
+{
+  "identifier": "blox-game",
+  "name": "BloX game",
+  "version": "0.0.1",
+  "description": "",
+  "exit_slider_text": "Slide left to end game",
+
+  "fullscreen": true,
+  "touches": true,
+  "gestures": true,
+  "launch_icon_url": "/app/ghosthunt/images/icon.png",
+
+  "asset_root_path": "/assets/app/blox-game/",
+  "controller": {
+    "html":"",
+    "app":"",
+    "scripts": [
+    ],
+    "styles": [
+    ""
+    ]
+  },
+  "display": {
+    "html": "display.html",
+    "app": "/assets/app/blox-game/display",
+    "scripts": [
+    ],
+    "styles": [
+      "display.css"
+    ]
+  }
+}
