@@ -3,7 +3,7 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
   class BloxDisplay extends CanwzApp
     timers: []
     blocksinterval: null
-    winner: []
+    #winner: [] Ta bort om den inte behövs mer
     initialPosition: {}
 
     unload: (done) ->
@@ -24,7 +24,6 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
             when 'move'
               touch = event.touches[0]
               initial = this.initialPosition[event.connection_id]
-              console.log initial
               if initial?
                 ship.x = Crafty.math.clamp(
                   initial._x + touch.x * 2,
@@ -36,20 +35,19 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
     
     addUser: (user) ->
       this.addShipForUser(user.color, user.connection_id)
-      this.addScoreTextForUser(user.color, user.connection_id)
-      this.layoutScoreTexts()
+      #this.addScoreTextForUser(user.color, user.connection_id)
+      #this.layoutScoreTexts()
     
     removeUser: (user) =>
       ship = this.findShipForUser(user.connection_id)
       ship.destroy() if ship?
 
-      score = this.findScoreTextForUser(user.connection_id)
-      score.destroy() if score?
+      #score = this.findScoreTextForUser(user.connection_id)
+      #score.destroy() if score?
 
-      this.layoutScoreTexts()
+      #this.layoutScoreTexts()
 
     getWinnerColor: =>
-      #winner = _.max(Crafty('Score').get(), (s) -> s._score)
       winner = _.min(Crafty('Ship').get(), (s) -> s._y)
       return winner._color if winner?
 
@@ -57,10 +55,10 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
       return _.find(Crafty('Ship').get(), (a) -> a.connection_id is connection_id)
     
     addShipForUser: (color, connection_id) ->
-      ship = Crafty.e('Ship').attr({connection_id: connection_id })
+      ship = Crafty.e('Ship').attr({connection_id: connection_id, color: color })
 
       $(ship._element).css({'background-image' : ''})
-      $.get 'img/ship.svg', (data) =>
+      $.get '/assets/app/blox-game/img/ship.svg', (data) =>
         svg = $(data).find('svg')
         svg = svg.removeAttr('xmlns:a')
         svg.find('path').css({ fill: color }).attr('stroke', color)
@@ -71,7 +69,7 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
 
     addScoreTextForUser: (color, connection_id) =>
       Crafty.e('Score').attr({color: color, connection_id: connection_id })
-      score._color = color
+      #score._color = color
 
     didLoad: (done) ->
       super =>
@@ -81,9 +79,9 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
     
     layoutScoreTexts: =>
       scores = Crafty('Score').get()
-      #for score, i in scores
-        #score.y = 1080 - (scores.length * 70) + i * 70
-        #score.x = 1920 - (scores.length * 70) + i * 70
+      for score, i in scores
+        score.y = 1080 - (scores.length * 70) + i * 70
+        score.x = 1920 - (scores.length * 70) + i * 70
     
     #0e476f Primary
     #156096 Secondary
@@ -92,7 +90,7 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
     setupCrafty: ->
       app = this
 
-      Crafty.init(1920, 1080, this.element.find('#game')) #Change target
+      Crafty.init(1920, 1080, this.element.find('#game').get(0)) #Change target this.element.find().get(0)
 
       Crafty.scene 'intro', ->
         logo = Crafty.e '2D, DOM, Image, Tween'
@@ -112,13 +110,11 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
 
         Crafty.c 'Ship', {
           init: ->
-            this.requires '2D, DOM, Collision, Image, Tween' #Twoway for testing
-            .attr({w: 50, h: 71, x: Crafty.math.randomInt(20, 1860), y: 870})
+            this.requires '2D, DOM, Collision, Image, Tween, Color' #Twoway for testing
+            .attr({w: 50, h: 71, x: Crafty.math.randomInt(20, 1860), y: Crafty.math.randomInt(840, 870)})
             .image('/assets/app/blox-game/img/ship.svg')
             .onHit('HinderBlocks', ->
               this.tween({ y: 870 }, 500)
-
-
             )
             .bind('EnterFrame', ->
               if(this.y > 100)
@@ -149,7 +145,7 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
             .color '#c52125'
             .attr({ w: 50, h: 50 })
             .bind 'EnterFrame', ->
-              if this.y > window.innerHeight
+              if this.y > 1080
                 this.destroy()
         }
 
@@ -159,17 +155,6 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
             .image('/assets/app/blox-game/img/info.png')
             .attr({ x: 710, y: 50 })
         }
-
-        Crafty.c 'Score', {
-          init: ->
-            this.requires('2D, DOM, Text')
-            .attr({ x: 50, w: 200, h: 70 })
-            .textFont({ family: 'Headline', size: '48pt' })
-            .setter('score', (newScore) ->
-              this._attr("_score", newScore)
-            )
-            this.score = 0
-          }
 
         leftBorder = Crafty.e('leftBorder')
           .requires '2D, DOM, Color, Solid'
@@ -190,8 +175,6 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
 
         app.blocksinterval = setInterval -> #app
 
-            #staticGen
-
           side = 50
 
           for i in [0.. Crafty.math.randomInt(1, 10)]
@@ -208,6 +191,7 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
         t = 30.0
         totalTime = 60000.0
         startTime = Date.now()
+        winner = null
         loader = document.getElementById('loader')
         $('#countdown').show()
 
@@ -231,7 +215,7 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
         setTimeout ->
           clearInterval(app.blocksinterval)
           $('#countdown').hide()
-          app.winner = app.getWinnerColor()
+          winner = app.getWinnerColor() #app.getWinnerColor
           Crafty.scene('Result')
         , totalTime
 
@@ -246,16 +230,16 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
           $.get '/assets/app/blox-game/img/winnership.svg', (data) =>
             svg = $(data).find('svg')
             svg = svg.removeAttr('xmlna:a')
-            svg.find('path').css({ fill: app.winner }).attr('stroke', app.winner)
+            svg.find('path').css({ fill: winner.color }).attr('stroke', winner.color)
             $(winningShip._element).append(svg)
 
           logo = Crafty.e('2D, DOM, Image, Tween')
-          .image('img/blox-text.png')
+          .image('/assets/app/blox-game/img/blox-text.png')
           .attr({ alpha: 0.0, x: 631.5, y: 170 })
           .css('background-size', '100% 100%')
           .tween({ alpha: 1.0 }, 1000)
 
-          if app.winner?
+          if winner?
             winnerText = Crafty.e('2D, DOM, Image, Tween')
               .attr({ alpha: 0.0, x: 802.5, y: 750 })
               .tween({ alpha: 1.0 }, 1000)
@@ -263,7 +247,7 @@ define ['common/canwz_app', 'jquery', 'crafty', 'display/user_handler'], (CanwzA
 
           setTimeout ->
             logo.bind 'TweenEnd', ->
-              app.exit =>
+              app.exit
             logo.tween({ alpha: 0.0 }, 1000)
             winnerText.tween({ alpha: 0.0 }, 1000)
             winningShip.tween({ alpha: 0.0 }, 1000)
